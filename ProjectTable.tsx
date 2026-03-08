@@ -35,7 +35,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ groupTitle, projects
         {displayTitle} <span className="font-normal text-base text-gray-500 dark:text-gray-400">({projects.length} projects)</span>
       </h3>
       
-      <div className="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
         <table className="min-w-full">
           <thead>
             {/* Updated blue color to match #1976D2 as per exact layout specs */}
