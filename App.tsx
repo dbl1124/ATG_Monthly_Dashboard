@@ -10,8 +10,14 @@ import {
   getStatusDistribution, 
   getTimelineData, 
   getBrandDistribution,
-  getCategoryTimelineData
+  getCategoryTimelineData,
+  getCycleTimeData,
+  getOnTimeDeliveryData,
+  getBottlenecksData,
+  getCapacityGanttData
 } from './dataProcessing';
+import { MarketingCharts } from './MarketingCharts';
+import { CapacityGantt } from './CapacityGantt';
 import { fetchWrikeData } from './wrikeApi';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -24,6 +30,9 @@ const App: React.FC = () => {
   
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Brand Filter State
+  const [selectedBrand, setSelectedBrand] = useState<string>("All");
 
   // PDF State
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -52,6 +61,24 @@ const App: React.FC = () => {
   const [timelineData, setTimelineData] = useState<TimelineDataPoint[]>([]);
   const [brandData, setBrandData] = useState<ChartDataPoint[]>([]);
   const [categoryTimelineData, setCategoryTimelineData] = useState<any[]>([]);
+
+  // Marketing Chart Data State
+  const [cycleTimeData, setCycleTimeData] = useState<ChartDataPoint[]>([]);
+  const [bottlenecksData, setBottlenecksData] = useState<{ chartData: ChartDataPoint[], projects: Project[] }>({ chartData: [], projects: [] });
+  const [onTimeData, setOnTimeData] = useState<{ onTime: number, late: number, total: number }>({ onTime: 0, late: 0, total: 0 });
+  const [capacityData, setCapacityData] = useState<any[]>([]);
+
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  // Apply dark mode class to root HTML element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
   // 1. Fetch Full Year Data ONCE on Mount
   useEffect(() => {
@@ -99,7 +126,7 @@ const App: React.FC = () => {
             parseInt(parts[1], 10)      // Day
         );
         
-        return pDate >= start && pDate <= end;
+        return pDate >= start && pDate <= end && (selectedBrand === "All" || p.brand === selectedBrand);
     });
 
     setProjects(filtered);
@@ -111,11 +138,19 @@ const App: React.FC = () => {
     setTimelineData(getTimelineData(filtered));
     setBrandData(getBrandDistribution(filtered));
     
+    // New Marketing Data
+    setCycleTimeData(getCycleTimeData(filtered));
+    setOnTimeData(getOnTimeDeliveryData(filtered));
+    setBottlenecksData(getBottlenecksData(filtered));
+    setCapacityData(getCapacityGanttData(filtered));
+    
     // Update Category Timeline based on FULL YEAR data
     // This ensures the chart always shows the full yearly context
-    setCategoryTimelineData(getCategoryTimelineData(fullYearProjects));
+      setCategoryTimelineData(getCategoryTimelineData(
+        selectedBrand === "All" ? fullYearProjects : fullYearProjects.filter(p => p.brand === selectedBrand)
+      ));
 
-  }, [startDateStr, endDateStr, fullYearProjects]);
+  }, [startDateStr, endDateStr, selectedBrand, fullYearProjects]);
 
   const generatePDF = async () => {
     setIsGeneratingPDF(true);
@@ -178,10 +213,10 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex flex-col items-center">
-          <div className="text-blue-600 font-bold text-xl mb-2">Connecting to Wrike...</div>
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-blue-600 dark:text-blue-400 font-bold text-xl mb-2">Connecting to Wrike...</div>
+          <div className="w-8 h-8 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
@@ -189,7 +224,7 @@ const App: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="text-red-500 font-bold text-lg max-w-md text-center">
           {error}
           <br/>
@@ -205,12 +240,12 @@ const App: React.FC = () => {
   const uniqueBrands = Array.from(new Set(projects.map(p => p.brand))).sort();
 
   return (
-    <div id="dashboard-container" className="min-h-screen bg-white p-8 max-w-[1400px] mx-auto relative">
+    <div id="dashboard-container" className="min-h-screen bg-white dark:bg-[#121212] p-8 max-w-[1400px] mx-auto relative transition-colors duration-200">
       {/* Header */}
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-black mb-2 tracking-tight">Project Dashboard</h1>
-          <p className="text-gray-500 text-sm font-medium">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight transition-colors duration-200">Project Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium transition-colors duration-200">
             {getSubtitle()}
           </p>
         </div>
@@ -218,25 +253,48 @@ const App: React.FC = () => {
         {/* Controls - Ignored during PDF generation */}
         <div className="flex flex-col md:flex-row items-end md:items-center gap-4" data-html2canvas-ignore="true">
             
+            {/* Dark Mode Toggle */}
+            <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium text-xs uppercase"
+            >
+                {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+            </button>
+
+            {/* Brand Filter */}
+            <div className="flex flex-col bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">Brand</label>
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  className="bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 focus:outline-none p-1 cursor-pointer w-32"
+                >
+                  <option value="All">All Brands</option>
+                  {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+            </div>
+
             {/* Date Range Picker */}
-            <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
             <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Start Date</label>
+                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">Start Date</label>
                 <input 
                 type="date" 
                 value={startDateStr}
                 onChange={(e) => setStartDateStr(e.target.value)}
-                className="bg-transparent text-sm font-medium text-gray-800 focus:outline-none p-1"
+                className="bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 focus:outline-none p-1"
+                style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
                 />
             </div>
             <span className="text-gray-400 font-light text-xl">/</span>
             <div className="flex flex-col">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">End Date</label>
+                <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase ml-1">End Date</label>
                 <input 
                 type="date" 
                 value={endDateStr}
                 onChange={(e) => setEndDateStr(e.target.value)}
-                className="bg-transparent text-sm font-medium text-gray-800 focus:outline-none p-1"
+                className="bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 focus:outline-none p-1"
+                style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}
                 />
             </div>
             </div>
@@ -271,14 +329,26 @@ const App: React.FC = () => {
         statusData={statusData}
         timelineData={timelineData}
         brandData={brandData}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Marketing Metrics Row */}
+      <MarketingCharts 
+        cycleTimeData={cycleTimeData}
+        bottlenecksData={bottlenecksData}
+        onTimeData={onTimeData}
+        isDarkMode={isDarkMode}
       />
 
       {/* Category Timeline Chart (Yearly Context) */}
-      <CategoryTimeline data={categoryTimelineData} />
+      <CategoryTimeline data={categoryTimelineData} isDarkMode={isDarkMode} />
+
+      {/* Team Capacity Gantt Chart */}
+      <CapacityGantt data={capacityData} isDarkMode={isDarkMode} />
 
       {/* Projects by Brand Tables */}
       <section>
-        <h2 className="text-xl font-bold text-black mb-6">Projects by Brand</h2>
+        <h2 className="text-xl font-bold text-black dark:text-white mb-6 transition-colors duration-200">Projects by Brand</h2>
         
         {uniqueBrands.map(brand => {
           const brandProjects = projects.filter(p => p.brand === brand);
@@ -294,7 +364,7 @@ const App: React.FC = () => {
         })}
         
         {projects.length === 0 && (
-          <div className="text-center py-10 text-gray-500 italic">
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400 italic transition-colors duration-200">
             No projects found in the selected date range.
           </div>
         )}

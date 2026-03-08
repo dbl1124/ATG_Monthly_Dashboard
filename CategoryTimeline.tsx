@@ -4,6 +4,7 @@ import { COLORS } from './constants';
 
 interface CategoryTimelineProps {
   data: any[];
+  isDarkMode?: boolean;
 }
 
 const BRAND_COLORS: Record<string, string> = {
@@ -16,7 +17,7 @@ const BRAND_COLORS: Record<string, string> = {
 };
 
 // Defined outside to maintain component stability and prevent tooltip positioning bugs
-const CustomTooltip = ({ active, payload, label, hoveredSeries }: any) => {
+const CustomTooltip = ({ active, payload, label, hoveredSeries, isDarkMode = false }: any) => {
   if (active && payload && payload.length) {
     // If a series is hovered, find its specific data in the payload
     // Recharts payload name matches the Line name prop
@@ -38,11 +39,11 @@ const CustomTooltip = ({ active, payload, label, hoveredSeries }: any) => {
       .sort(([, a], [, b]) => (b as number) - (a as number));
 
     return (
-      <div className="bg-white p-3 rounded-lg border border-gray-100 shadow-xl min-w-[160px]">
+      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-xl min-w-[160px] transition-colors duration-200">
         {/* Header: Month and Category */}
-        <div className="border-b border-gray-100 pb-2 mb-2">
+        <div className="border-b border-gray-100 dark:border-gray-700 pb-2 mb-2">
           <p className="text-xs text-gray-500 font-medium uppercase">{label}</p>
-          <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <p className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
             {spaceName}
           </p>
@@ -50,8 +51,8 @@ const CustomTooltip = ({ active, payload, label, hoveredSeries }: any) => {
 
         {/* Total Count */}
         <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-semibold text-gray-600">Total Projects</span>
-            <span className="text-sm font-bold text-gray-900">{totalCount}</span>
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Total Projects</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white">{totalCount}</span>
         </div>
 
         {/* Brand Breakdown */}
@@ -72,7 +73,7 @@ const CustomTooltip = ({ active, payload, label, hoveredSeries }: any) => {
                         ></span>
                         <span className="text-gray-500">{displayName}</span>
                     </div>
-                    <span className="font-medium text-gray-700">{(count as number)}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{(count as number)}</span>
                   </div>
                 );
             })}
@@ -87,8 +88,11 @@ const CustomTooltip = ({ active, payload, label, hoveredSeries }: any) => {
   return null;
 };
 
-export const CategoryTimeline: React.FC<CategoryTimelineProps> = ({ data }) => {
+export const CategoryTimeline: React.FC<CategoryTimelineProps> = ({ data, isDarkMode = false }) => {
   const [hoveredSeries, setHoveredSeries] = useState<string | null>(null);
+  
+  const textColor = isDarkMode ? '#e5e7eb' : '#333';
+  const mutedTextColor = isDarkMode ? '#9ca3af' : '#666';
 
   // Helper to create props for Lines to reduce repetition
   const lineProps = (dataKey: string, name: string, color: string) => ({
@@ -105,29 +109,29 @@ export const CategoryTimeline: React.FC<CategoryTimelineProps> = ({ data }) => {
 
   return (
     <div className="mb-12">
-      <h3 className="text-xl font-bold text-black mb-6">Category Timeline (Yearly)</h3>
-      <div className="h-80 w-full bg-white rounded-lg border border-gray-100 p-4 shadow-sm">
+      <h3 className={`text-xl font-bold mb-6 transition-colors duration-200 ${isDarkMode ? 'text-white' : 'text-black'}`}>Category Timeline (Yearly)</h3>
+      <div className="h-80 w-full bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 p-4 shadow-sm transition-colors duration-200">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={data} 
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#374151" : "#E0E0E0"} />
             <XAxis 
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#666', fontSize: 12, fontWeight: 500 }} 
+              tick={{ fill: mutedTextColor, fontSize: 12, fontWeight: 500 }} 
               dy={10} 
             />
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: '#666', fontSize: 12 }} 
+              tick={{ fill: mutedTextColor, fontSize: 12 }} 
             />
             <Tooltip 
-              content={<CustomTooltip hoveredSeries={hoveredSeries} />} 
-              cursor={{ stroke: '#E0E0E0', strokeWidth: 1 }} 
+              content={<CustomTooltip hoveredSeries={hoveredSeries} isDarkMode={isDarkMode} />} 
+              cursor={{ stroke: isDarkMode ? '#4b5563' : '#E0E0E0', strokeWidth: 1 }} 
               shared={false}
               isAnimationActive={false}
             />
@@ -135,7 +139,7 @@ export const CategoryTimeline: React.FC<CategoryTimelineProps> = ({ data }) => {
               verticalAlign="top" 
               height={36} 
               iconType="circle"
-              wrapperStyle={{ paddingBottom: '20px', fontSize: '12px', fontWeight: 500 }}
+              wrapperStyle={{ paddingBottom: '20px', fontSize: '12px', fontWeight: 500, color: mutedTextColor }}
             />
             
             <Line {...lineProps("Photography", "Photography", COLORS.spacePhotography)} />

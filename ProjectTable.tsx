@@ -30,16 +30,16 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ groupTitle, projects
   };
 
   return (
-    <div className="mb-8">
-      <h3 className="text-lg font-bold text-gray-800 mb-2">
-        {displayTitle} <span className="font-normal text-base">({projects.length} projects)</span>
+    <div className="mb-8 transition-colors duration-200">
+      <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2 transition-colors duration-200">
+        {displayTitle} <span className="font-normal text-base text-gray-500 dark:text-gray-400">({projects.length} projects)</span>
       </h3>
       
-      <div className="overflow-hidden border border-gray-200">
+      <div className="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
         <table className="min-w-full">
           <thead>
             {/* Updated blue color to match #1976D2 as per exact layout specs */}
-            <tr className="bg-[#1976D2] text-white text-xs font-bold uppercase">
+            <tr className="bg-[#1976D2] dark:bg-[#1565C0] text-white text-xs font-bold uppercase transition-colors duration-200">
               <th className="py-2 px-4 text-left w-1/4">Project</th>
               <th className="py-2 px-4 text-center w-24">Category</th>
               {isOther && <th className="py-2 px-4 text-left w-24">Brand</th>}
@@ -51,22 +51,22 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ groupTitle, projects
               <th className="py-2 px-4 text-center w-16">Done</th>
             </tr>
           </thead>
-          <tbody className="bg-white">
+          <tbody className="bg-white dark:bg-gray-800 transition-colors duration-200">
             {projects.map((project, idx) => (
-              <tr key={project.id} className="border-b border-gray-100 last:border-b-0 text-sm">
-                <td className="py-3 px-4 text-gray-800 font-medium truncate max-w-xs" title={project.name}>
+              <tr key={project.id} className="border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-sm">
+                <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium truncate max-w-xs transition-colors duration-200" title={project.name}>
                   {project.name}
                 </td>
-                <td className="py-3 px-4 text-gray-600 font-medium text-center">
+                <td className="py-3 px-4 text-gray-600 dark:text-gray-400 font-medium text-center transition-colors duration-200">
                   {SPACE_DISPLAY_NAMES[project.space] || project.space}
                 </td>
                 {isOther && (
-                  <td className="py-3 px-4 text-gray-600 font-medium">
+                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400 font-medium transition-colors duration-200">
                     {project.customBrand || '-'}
                   </td>
                 )}
                 {isOther && (
-                  <td className="py-3 px-4 text-gray-600 font-medium">
+                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400 font-medium transition-colors duration-200">
                     {project.distributor || '-'}
                   </td>
                 )}
@@ -78,9 +78,9 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({ groupTitle, projects
                     {project.status}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{project.createdDate}</td>
-                <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{project.dueDate}</td>
-                <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{project.approvedDate}</td>
+                <td className="py-3 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap transition-colors duration-200">{project.createdDate}</td>
+                <td className="py-3 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap transition-colors duration-200">{project.dueDate}</td>
+                <td className="py-3 px-4 text-gray-500 dark:text-gray-400 whitespace-nowrap transition-colors duration-200">{project.approvedDate}</td>
                 <td className="py-3 px-4 text-center">
                   {project.completed && <CheckIcon />}
                 </td>
